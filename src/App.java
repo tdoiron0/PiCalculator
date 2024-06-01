@@ -5,7 +5,7 @@ import java.util.Random;
 
 public class App {
     public static void main(String[] args) throws Exception {
-        System.out.println(PiCalculator.getPiToDigit(10000));
+        System.out.println(PiCalculator.getPiToDigit(1000000));
 
         /*
         for (int i = 0; i < 10000; ++i) {
