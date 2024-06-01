@@ -31,7 +31,7 @@ public class DebugTimer {
         splits.add(new Split(splitName, System.nanoTime() - timerStart));
         timerStart = System.nanoTime();
     }
-    public void dumpToLog() {
+    public String dumpToLog() {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("%s: begin\n", name));
         while (splits.peek() != null) {
@@ -39,6 +39,8 @@ public class DebugTimer {
             sb.append(String.format("\t%s: %d ms, %s\n", name, temp.getMilli(), temp.name));
         }
         sb.append(String.format("%s: end", name));
-        System.out.println(sb.toString());
+        String result = sb.toString();
+        System.out.println(result);
+        return result;
     }
 }

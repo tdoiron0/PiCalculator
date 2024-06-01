@@ -30,10 +30,10 @@ public class PiCalculator {
             timer.split("Creating exponent terms");
 
             BigDecimal term = term5.multiply(term1.subtract(term2, mc).subtract(term3, mc).subtract(term4, mc));
-            timer.split(String.format("Iter%d: Finding pi term", k));
+            timer.split("Finding pi term");
 
             sum = sum.add(term, mc);
-            timer.split(String.format("Iter%d: Adding pi term", k));
+            timer.split("Adding pi term");
 
             timer.dumpToLog();
         }
