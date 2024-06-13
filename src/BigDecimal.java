@@ -66,6 +66,10 @@ public class BigDecimal {
             return result;
         }
         public void open() throws IOException {
+            if (filePath.length() == 0) {
+                throw new IllegalStateException("Must set filepath before opening file");
+            }
+
             File file = new File(filePath);
             if (!file.exists()) {
                 file.createNewFile();
@@ -129,9 +133,13 @@ public class BigDecimal {
         }
         
         if (carryBlock.getDigit(0) != 0) {
-
+            blocks.addFirst(carryBlock);
         }
 
         return null;
+    }
+
+    public void write() {
+
     }
 }
