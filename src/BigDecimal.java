@@ -2,11 +2,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class BigDecimal {
     public static final int MAX_BLOCK_SIZE = 100;
+    public static final String MATH_ENV_FILE_PATH = "testdata/";
 
     private boolean negative = false;
     private int decimalPlace = 0;
@@ -71,25 +74,44 @@ public class BigDecimal {
             }
 
             File file = new File(filePath);
-            if (!file.exists()) {
-                file.createNewFile();
+            String data = Files.readString(file.toPath());
+            String[] dataParsed = data.substring(1, data.length() - 1).split(", ");
+            for (String it : dataParsed) {
+                digits.add(Integer.parseInt(it));
             }
-
-            FileInputStream stream = new FileInputStream(file);
-            int content;
-            while ((content = stream.read()) != -1) {
-                digits.addLast(content);
-            }
-            stream.close();
         }
         public void close() {
             digits = new ArrayList<>();
+        }
+        public void write() throws IOException {
+            Files.writeString(new File(filePath).toPath(), digits.toString(), StandardOpenOption.CREATE);
+        }
+
+        public String toString() {
+            try {
+                open();
+
+                StringBuilder sb = new StringBuilder();
+                for (Integer it : digits) {
+                    sb.append(it);
+                }
+                close();
+                return sb.toString();
+            } catch (IOException e) {
+                System.out.println("ERROR::failed to open file to convert block into string:\n" + e);
+            }
+            return "";
         }
     }
 
     public BigDecimal(String name, Block block) {
         this.name = name;
         this.blocks.addFirst(block);
+        try {
+            block.write();
+        } catch (IOException e) {
+            System.out.println("ERROR::failed to create decimal:\n" + e);
+        }
     }
 
     public boolean isNegative() { return negative; }
@@ -107,17 +129,20 @@ public class BigDecimal {
             try {
                 blocks.get(i).open();
                 oper.getBlock(j).open();
+                
+                Object[] temp = blocks.get(i).add(oper.getBlock(j), prevCarry);
+                blocksResult.addFirst((BigDecimal.Block)temp[0]);
+                prevCarry = (Integer)temp[1];
+
+                blocksResult.getFirst().write();
+
+                blocks.get(i).close();
+                oper.getBlock(j).close();
+                blocksResult.getFirst().close();
             } catch (IOException e) {
                 System.out.println("Addition failed:" + e.toString());
                 return null;
             }
-
-            Object[] temp = blocks.get(i).add(oper.getBlock(j), prevCarry);
-            blocksResult.addFirst((BigDecimal.Block)temp[0]);
-            prevCarry = (Integer)temp[1];
-
-            blocks.get(i).close();
-            oper.getBlock(j).close();
         }
 
         Block carryBlock = new Block(prevCarry);
@@ -139,7 +164,11 @@ public class BigDecimal {
         return null;
     }
 
-    public void write() {
-
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (Block it : blocks) {
+            sb.append(it.toString());
+        }
+        return sb.toString();
     }
 }

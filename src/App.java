@@ -9,27 +9,14 @@ import java.util.Random;
 
 public class App {
     public static void main(String[] args) throws Exception {
-        try {
-            open("testdata\\test.txt");
-        } catch (IOException e) {
-            System.out.println("ERROR:\n" + e.toString());
-        }
-    }
+        int n = 100000;
+        MathContext mc = new MathContext(n);
 
-    public static void open(String filePath) throws IOException {
-        ArrayList<Integer> digits = new ArrayList<>();
+        BigDecimal base = new BigDecimal(16, mc);
+        base = base.pow(n);
+        BigDecimal term5 = new BigDecimal(1, mc).divide(base);
 
-        File file = new File(filePath);
-        System.out.println(file.getAbsolutePath() + ":");
-        
-        if (!file.exists()) {
-            file.createNewFile();
-        }
-
-        FileInputStream stream = new FileInputStream(file);
-        while (stream.available() > 0) {
-            digits.addLast(stream.read() - 48);
-        }
-        System.out.println(digits);
+        System.out.println("base length: " + base.toString().length());
+        System.out.println("term length: " + term5.toString().length());
     }
 }
