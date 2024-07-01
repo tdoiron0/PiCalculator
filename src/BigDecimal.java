@@ -13,16 +13,14 @@ public class BigDecimal {
 
     private boolean negative = false;
     private int decimalPlace = 0;
-    private final String name;
+    private File folder;
     private final LinkedList<Block> blocks = new LinkedList<>();
 
     private class Block {
         private ArrayList<Integer> digits;
-        private String filePath = "";
 
-        public Block(ArrayList<Integer> digits, String filePath) {
+        public Block(ArrayList<Integer> digits) {
             this.digits = digits;
-            this.filePath = filePath;
         }
         private Block(int startValue) {
             digits.addFirst(startValue);
@@ -62,10 +60,10 @@ public class BigDecimal {
                 --j;
             }
             
-            Object[] result = { new Block(resultDigits, filePath), carry };
+            Object[] result = { new Block(resultDigits), carry };
             return result;
         }
-        public void open() throws IOException {
+        public void open(String filePath) throws IOException {
             if (filePath.length() == 0) {
                 throw new IllegalStateException("Must set filepath before opening file");
             }
@@ -80,37 +78,41 @@ public class BigDecimal {
         public void close() {
             digits = new ArrayList<>();
         }
-        public void write() throws IOException {
+        public void write(String filePath) throws IOException {
+            File file = new File(filePath);
+            if (!file.exists()) {
+                file.getParentFile().mkdir();
+                file.createNewFile();
+            }
             Files.writeString(new File(filePath).toPath(), digits.toString(), StandardOpenOption.CREATE);
         }
 
-        public String toString() {
+        public void print(String filePath) {
             try {
-                open();
-
+                open(filePath);
                 StringBuilder sb = new StringBuilder();
                 for (Integer it : digits) {
                     sb.append(it);
                 }
-                close();
-                return sb.toString();
+                System.out.print(sb.toString());
             } catch (IOException e) {
                 System.out.println("ERROR::failed to open file to convert block into string:\n" + e);
             }
-            return "";
         }
     }
 
     public BigDecimal(String src) {
+        folder = new File(MATH_ENV_FILE_PATH + MathEnvironment.getId());
+        
         ArrayList<Integer> digits = new ArrayList<>();
         for (int i = 0; i < src.length(); ++i) {
-            digits.add(src.charAt(i) - 30);
+            digits.add(src.charAt(i) - 48);
         }
-        Block startBlock = new Block(digits, src);
+        Block startBlock = new Block(digits);
         
         this.blocks.addFirst(startBlock);
         try {
-            startBlock.write();
+            startBlock.write(folder.getAbsolutePath() + "\\1.txt");
         } catch (IOException e) {
             System.out.println("ERROR::failed to create decimal:\n" + e);
         }
@@ -120,29 +122,31 @@ public class BigDecimal {
     public int getDecimalPlace() { return decimalPlace; } 
     public int getBlockSize() { return blocks.size(); }
     public Block getBlock(int index) { return blocks.get(index); }
+    public File getFolder() { return folder; }
 
     public BigDecimal add(BigDecimal oper) {
         LinkedList<Block> blocksResult = new LinkedList<>();
+        File resultFolder = new File(MATH_ENV_FILE_PATH + MathEnvironment.getId());
 
         int i = blocks.size() - 1;
         int j = oper.getBlockSize() - 1;
         int prevCarry = 0;
         while (i >= 0 && j >= 0) {
             try {
-                blocks.get(i).open();
-                oper.getBlock(j).open();
+                blocks.get(i).open(folder.getAbsolutePath() + "/" + (i + 1) + ".txt");
+                oper.getBlock(j).open(oper.getFolder().getAbsolutePath() + "/" + (i + 1) + ".txt");
                 
                 Object[] temp = blocks.get(i).add(oper.getBlock(j), prevCarry);
                 blocksResult.addFirst((BigDecimal.Block)temp[0]);
                 prevCarry = (Integer)temp[1];
 
-                blocksResult.getFirst().write();
+                blocksResult.getFirst().write(resultFolder.getAbsolutePath() + "/" + (i + 1) + ".txt");
 
                 blocks.get(i).close();
                 oper.getBlock(j).close();
                 blocksResult.getFirst().close();
             } catch (IOException e) {
-                System.out.println("Addition failed:" + e.toString());
+                System.out.println("Addition failed:\n" + e.toString());
                 return null;
             }
         }
