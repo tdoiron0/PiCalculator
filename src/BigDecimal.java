@@ -101,26 +101,16 @@ public class BigDecimal {
         }
     }
 
-    public BigDecimal(String name, String src) {
+    public BigDecimal(String src) {
         ArrayList<Integer> digits = new ArrayList<>();
         for (int i = 0; i < src.length(); ++i) {
             digits.add(src.charAt(i) - 30);
         }
         Block startBlock = new Block(digits, src);
         
-        this.name = name;
         this.blocks.addFirst(startBlock);
         try {
             startBlock.write();
-        } catch (IOException e) {
-            System.out.println("ERROR::failed to create decimal:\n" + e);
-        }
-    }
-    public BigDecimal(String name, Block block) {
-        this.name = name;
-        this.blocks.addFirst(block);
-        try {
-            block.write();
         } catch (IOException e) {
             System.out.println("ERROR::failed to create decimal:\n" + e);
         }
