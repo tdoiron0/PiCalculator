@@ -20,9 +20,6 @@ public class BigDecimal {
         private ArrayList<Integer> digits;
         private String filePath = "";
 
-        public Block(String filePath) {
-            this(new ArrayList<>(), filePath);
-        }
         public Block(ArrayList<Integer> digits, String filePath) {
             this.digits = digits;
             this.filePath = filePath;
@@ -65,7 +62,7 @@ public class BigDecimal {
                 --j;
             }
             
-            Object[] result = { new Block(filePath), carry };
+            Object[] result = { new Block(resultDigits, filePath), carry };
             return result;
         }
         public void open() throws IOException {
@@ -104,6 +101,21 @@ public class BigDecimal {
         }
     }
 
+    public BigDecimal(String name, String src) {
+        ArrayList<Integer> digits = new ArrayList<>();
+        for (int i = 0; i < src.length(); ++i) {
+            digits.add(src.charAt(i) - 30);
+        }
+        Block startBlock = new Block(digits, src);
+        
+        this.name = name;
+        this.blocks.addFirst(startBlock);
+        try {
+            startBlock.write();
+        } catch (IOException e) {
+            System.out.println("ERROR::failed to create decimal:\n" + e);
+        }
+    }
     public BigDecimal(String name, Block block) {
         this.name = name;
         this.blocks.addFirst(block);
