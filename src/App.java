@@ -5,6 +5,6 @@ public class App {
 
         BigDecimal result = num1.add(num2);
 
-        System.err.println(result);
+        result.print();
     }
 }

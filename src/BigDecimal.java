@@ -14,7 +14,7 @@ public class BigDecimal {
     private boolean negative = false;
     private int decimalPlace = 0;
     private File folder;
-    private final LinkedList<Block> blocks = new LinkedList<>();
+    private LinkedList<Block> blocks = new LinkedList<>();
 
     private class Block {
         private ArrayList<Integer> digits;
@@ -23,6 +23,7 @@ public class BigDecimal {
             this.digits = digits;
         }
         private Block(int startValue) {
+            digits = new ArrayList<>();
             digits.addFirst(startValue);
         }
 
@@ -117,6 +118,10 @@ public class BigDecimal {
             System.out.println("ERROR::failed to create decimal:\n" + e);
         }
     }
+    private BigDecimal(LinkedList<Block> blocks, File folder) {
+        this.blocks = blocks;
+        this.folder = folder;
+    }
 
     public boolean isNegative() { return negative; }
     public int getDecimalPlace() { return decimalPlace; } 
@@ -149,6 +154,9 @@ public class BigDecimal {
                 System.out.println("Addition failed:\n" + e.toString());
                 return null;
             }
+
+            --i;
+            --j;
         }
 
         Block carryBlock = new Block(prevCarry);
@@ -156,25 +164,28 @@ public class BigDecimal {
             Object[] temp = blocks.get(i).add(carryBlock, 0);
             blocksResult.add((BigDecimal.Block)temp[0]);
             carryBlock = new Block((Integer)temp[1]);
+            --i;
         }
         while (j >= 0) {
             Object[] temp = oper.getBlock(j).add(carryBlock, 0);
             blocksResult.add((BigDecimal.Block)temp[0]);
             carryBlock = new Block((Integer)temp[1]);
+            --j;
         }
         
         if (carryBlock.getDigit(0) != 0) {
             blocks.addFirst(carryBlock);
         }
 
-        return null;
+        return new BigDecimal(blocksResult, resultFolder);
     }
 
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (Block it : blocks) {
-            sb.append(it.toString());
+    public void print() {
+        System.out.println("folder path: " + folder.getAbsolutePath());
+        System.out.println("num blocks: " + blocks.size());
+        System.out.print("Digits: ");
+        for (int i = 1; i <= blocks.size(); ++i) {
+            blocks.get(i - 1).print(folder.getAbsolutePath() + "/" + i + ".txt");
         }
-        return sb.toString();
     }
 }
