@@ -6,8 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
-public class BigDecimal {
+public class BlockDecimal {
     public static final int MAX_BLOCK_SIZE = 100;
     public static final String MATH_ENV_FILE_PATH = "testdata/";
 
@@ -17,9 +18,9 @@ public class BigDecimal {
     private LinkedList<Block> blocks = new LinkedList<>();
 
     private class Block {
-        private ArrayList<Integer> digits;
+        private List<Integer> digits;
 
-        public Block(ArrayList<Integer> digits) {
+        public Block(List<Integer> digits) {
             this.digits = digits;
         }
         private Block(int startValue) {
@@ -40,7 +41,7 @@ public class BigDecimal {
                 int total = digits.get(i) + oper.getDigit(j) + carry;
                 int digit = total % 10;
                 carry = total / 10;
-                resultDigits.add(digit);
+                resultDigits.addFirst(digit);
 
                 --i;
                 --j;
@@ -50,19 +51,25 @@ public class BigDecimal {
                 int total = digits.get(i) + carry;
                 int digit = total % 10; 
                 carry = total / 10;
-                resultDigits.add(digit);
+                resultDigits.addFirst(digit);
                 --i;
             }
             while (j >= 0) {
                 int total = oper.getDigit(j) + carry;
                 int digit = total % 10; 
                 carry = total / 10;
-                resultDigits.add(digit);
+                resultDigits.addFirst(digit);
                 --j;
             }
-            
-            Object[] result = { new Block(resultDigits), carry };
-            return result;
+
+            if (carry != 0 && resultDigits.size() < MAX_BLOCK_SIZE) {
+                resultDigits.addFirst(carry);
+                Object[] result = { new Block(resultDigits), 0 };
+                return result;
+            } else {
+                Object[] result = { new Block(resultDigits), carry };
+                return result;
+            }
         }
         public void open(String filePath) throws IOException {
             if (filePath.length() == 0) {
@@ -84,6 +91,10 @@ public class BigDecimal {
             if (!file.exists()) {
                 file.getParentFile().mkdir();
                 file.createNewFile();
+            } else {
+                file.delete();
+                file.getParentFile().mkdir();
+                file.createNewFile();
             }
             Files.writeString(new File(filePath).toPath(), digits.toString(), StandardOpenOption.CREATE);
         }
@@ -97,28 +108,40 @@ public class BigDecimal {
                 }
                 System.out.print(sb.toString());
             } catch (IOException e) {
-                System.out.println("ERROR::failed to open file to convert block into string:\n" + e);
+                System.out.println("ERROR::failed to open file to print:\n" + e);
             }
         }
     }
 
-    public BigDecimal(String src) {
+    public BlockDecimal(String src) {
         folder = new File(MATH_ENV_FILE_PATH + MathEnvironment.getId());
         
-        ArrayList<Integer> digits = new ArrayList<>();
-        for (int i = 0; i < src.length(); ++i) {
-            digits.add(src.charAt(i) - 48);
+        List<List<Integer>> digits = new ArrayList<>();
+        List<Integer> currList = new ArrayList<>();
+        for (int i = src.length() - 1; i >= 0; --i) {
+            currList.addFirst(src.charAt(i) - 48);
+            if ((i + 1) % MAX_BLOCK_SIZE == 0) {
+                digits.addFirst(currList);
+                currList = new ArrayList<>();
+            }
         }
-        Block startBlock = new Block(digits);
-        
-        this.blocks.addFirst(startBlock);
-        try {
-            startBlock.write(folder.getAbsolutePath() + "\\1.txt");
-        } catch (IOException e) {
-            System.out.println("ERROR::failed to create decimal:\n" + e);
+        if (currList.size() > 0) {
+            digits.addFirst(currList);
+        }
+
+        for (int i = digits.size() - 1; i >= 0; --i) {
+            Block newBlock = new Block(digits.get(i));
+            try {
+                newBlock.write(folder.getAbsolutePath() + "/" + (i + 1) +".txt");
+            } catch (IOException e) {
+                System.out.println("ERROR::failed to create decimal:\n" + e);
+            }
+            newBlock.close();
+
+            this.blocks.addFirst(newBlock);
         }
     }
-    private BigDecimal(LinkedList<Block> blocks, File folder) {
+    private BlockDecimal(LinkedList<Block> blocks, File folder) {
         this.blocks = blocks;
         this.folder = folder;
     }
@@ -129,7 +152,7 @@ public class BigDecimal {
     public Block getBlock(int index) { return blocks.get(index); }
     public File getFolder() { return folder; }
 
-    public BigDecimal add(BigDecimal oper) {
+    public BlockDecimal add(BlockDecimal oper) {
         LinkedList<Block> blocksResult = new LinkedList<>();
         File resultFolder = new File(MATH_ENV_FILE_PATH + MathEnvironment.getId());
 
@@ -139,13 +162,13 @@ public class BigDecimal {
         while (i >= 0 && j >= 0) {
             try {
                 blocks.get(i).open(folder.getAbsolutePath() + "/" + (i + 1) + ".txt");
-                oper.getBlock(j).open(oper.getFolder().getAbsolutePath() + "/" + (i + 1) + ".txt");
+                oper.getBlock(j).open(oper.getFolder().getAbsolutePath() + "/" + (j + 1) + ".txt");
                 
                 Object[] temp = blocks.get(i).add(oper.getBlock(j), prevCarry);
-                blocksResult.addFirst((BigDecimal.Block)temp[0]);
+                blocksResult.addFirst((BlockDecimal.Block)temp[0]);
                 prevCarry = (Integer)temp[1];
 
-                blocksResult.getFirst().write(resultFolder.getAbsolutePath() + "/" + (i + 1) + ".txt");
+                blocksResult.getFirst().write(resultFolder.getAbsolutePath() + "/" + (Math.max(i, j) + 1) + ".txt");
 
                 blocks.get(i).close();
                 oper.getBlock(j).close();
@@ -162,22 +185,25 @@ public class BigDecimal {
         Block carryBlock = new Block(prevCarry);
         while (i >= 0) {
             Object[] temp = blocks.get(i).add(carryBlock, 0);
-            blocksResult.add((BigDecimal.Block)temp[0]);
+            blocksResult.add((BlockDecimal.Block)temp[0]);
             carryBlock = new Block((Integer)temp[1]);
             --i;
         }
         while (j >= 0) {
             Object[] temp = oper.getBlock(j).add(carryBlock, 0);
-            blocksResult.add((BigDecimal.Block)temp[0]);
+            blocksResult.add((BlockDecimal.Block)temp[0]);
             carryBlock = new Block((Integer)temp[1]);
             --j;
         }
         
-        if (carryBlock.getDigit(0) != 0) {
+        if (carryBlock.digitLength() != 0) {
             blocks.addFirst(carryBlock);
         }
 
-        return new BigDecimal(blocksResult, resultFolder);
+        return new BlockDecimal(blocksResult, resultFolder);
+    }
+    public void cleanUp() {
+
     }
 
     public void print() {
@@ -187,5 +213,6 @@ public class BigDecimal {
         for (int i = 1; i <= blocks.size(); ++i) {
             blocks.get(i - 1).print(folder.getAbsolutePath() + "/" + i + ".txt");
         }
+        System.out.println("");
     }
 }
