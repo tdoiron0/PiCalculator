@@ -18,7 +18,7 @@ public class BlockDecimal {
         this.folder = new File(MATH_ENV_FILE_PATH + MathEnvironment.getId());
 
         for (int i = src.length() - 1; i >= 0; --i) {
-            addDigits(src.charAt(i) - 48);
+            addDigit(src.charAt(i) - 48);
         } 
     }
 
@@ -43,11 +43,31 @@ public class BlockDecimal {
                 System.out.println("Addition failed:\n" + e.toString());
                 return null;
             }
+
+            --i;
+            --j;
         }
         return result;
     }
     public void print() {
-        
+        System.out.println("folder path: " + folder.getAbsolutePath());
+        System.out.println("num blocks: " + numBlocks);
+        System.out.print("Digits: ");
+
+        for (int i = numBlocks - 1; i >= 0; --i) {
+            try {
+                List<Integer> currBlock = getBlock(i);
+                String sb = "";
+                for (Integer it : currBlock) {
+                    sb = it + sb;
+                }
+                System.out.print(sb.toString());
+            } catch (IOException e) {
+                System.out.println("ERROR::failed to print to console:\n" + e.toString());
+                return;
+            }
+        }
+        System.out.println("");
     }
 
     private Object[] addBlock(List<Integer> oper1, List<Integer> oper2, int prevCarry) {
@@ -81,7 +101,7 @@ public class BlockDecimal {
             --j;
         }
 
-        if (carry == 0 && resultDigits.size() < MAX_BLOCK_SIZE) {
+        if (carry == 0 && resultDigits.size() == MAX_BLOCK_SIZE) {
             resultDigits.addFirst(carry);
             Object[] result = { resultDigits, 0 };
             return result;
@@ -113,30 +133,38 @@ public class BlockDecimal {
     }
     private void addDigits(List<Integer> digits) {
         try {
-            List<Integer> lastDigits = getBlock(numBlocks - 1);
+            List<Integer> lastDigits = null;
+            if (numBlocks == 0) {
+                lastDigits = new ArrayList<>();
+            } else {
+                lastDigits = getBlock(numBlocks - 1);
+            }
             for (int i = digits.size() - 1; i >= 0; --i) {
                 if (lastDigits.size() + 1 == MAX_BLOCK_SIZE) {
-                    writeBlock(lastDigits, numBlocks);
+                    writeBlock(lastDigits, (numBlocks == 0) ? 0 : numBlocks - 1);
                     lastDigits = new ArrayList<>();
                     ++numBlocks;
                 }
                 lastDigits.addFirst(digits.get(i));
+                digits.removeFirst();
             }
-            if (lastDigits.size() != 0) {
-                writeBlock(lastDigits, numBlocks);
-                ++numBlocks;
+            if (numBlocks == 0) {
+                writeBlock(lastDigits, 0);
+                numBlocks++;
+            } else {
+                writeBlock(lastDigits, numBlocks - 1);
             }
         } catch (IOException e) {
             System.out.println("ERROR::failed to add digits to decimal:\n" + e.toString());
             return;
         }
     }
-    private void addDigits(int digit) {
+    private void addDigit(int digit) {
         List<Integer> list = new ArrayList<>();
         list.add(digit);
         addDigits(list);
     }
     private String blockPath(int index) {
-        return folder.getAbsolutePath() + "/" + index + ".txt";
+        return folder.getAbsolutePath() + "\\" + index + ".txt";
     }
 }

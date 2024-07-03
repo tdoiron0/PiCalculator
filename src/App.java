@@ -1,12 +1,18 @@
+import java.io.File;
 import java.math.BigDecimal;
 
 public class App {
     public static void main(String[] args) throws Exception {
-        String numSrc1 = "90812980329000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-        String numSrc2 = "828";
+        //System.out.println(new File("testdata").getAbsolutePath());
+
+        String numSrc1 = "1";
+        String numSrc2 = "2";
 
         BlockDecimal num1 = new BlockDecimal(numSrc1);
         BlockDecimal num2 = new BlockDecimal(numSrc2);
+
+        num1.print();
+        num2.print();
 
         BlockDecimal result = num1.add(num2);
 
