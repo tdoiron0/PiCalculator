@@ -18,19 +18,19 @@ public class BlockDecimal {
         this.folder = new File(MATH_ENV_FILE_PATH + MathEnvironment.getId());
 
         for (int i = src.length() - 1; i >= 0; --i) {
-            addDigit(src.charAt(i) - 48);
+            appendDigit(src.charAt(i) - 48);
         } 
     }
 
     public int getNumBlocks() { return numBlocks; } 
 
     public BlockDecimal add(BlockDecimal oper) {
-        BlockDecimal result = new BlockDecimal("");
-        int i = numBlocks - 1;
-        int j = oper.getNumBlocks() - 1;
-        int carry = 0;
-        while (i >= 0 && j >= 0) {
-            try {
+        try {
+            BlockDecimal result = new BlockDecimal("");
+            int i = numBlocks - 1;
+            int j = oper.getNumBlocks() - 1;
+            int carry = 0;
+            while (i >= 0 && j >= 0) {
                 List<Integer> block1 = getBlock(i);
                 List<Integer> block2 = oper.getBlock(i);
 
@@ -38,16 +38,30 @@ public class BlockDecimal {
                 List<Integer> newDigits = (List<Integer>)opRes[0];
                 carry = (Integer)opRes[1];
 
-                result.addDigits(newDigits);
-            } catch (IOException e) {
-                System.out.println("Addition failed:\n" + e.toString());
-                return null;
+                result.appendDigits(newDigits);
+
+                --i;
+                --j;
             }
 
-            --i;
-            --j;
+            while (i >= 0) {
+                List<Integer> temp = getBlock(i);
+                int total = temp.getFirst() + carry;
+                int digit = total % 10;
+                carry = total / 10;
+                
+                --i;
+            }
+            while (j >= 0) {
+
+                --j;
+            }
+
+            return result;
+        } catch (IOException e) {
+            System.out.println("Addition failed:\n" + e.toString());
+            return null;
         }
-        return result;
     }
     public void print() {
         System.out.println("folder path: " + folder.getAbsolutePath());
@@ -110,7 +124,7 @@ public class BlockDecimal {
             return result;
         }
     }
-    public List<Integer> getBlock(int index) throws IOException{
+    public List<Integer> getBlock(int index) throws IOException {
         String data = Files.readString(Paths.get(blockPath(index)));
         String[] dataParsed = data.substring(1, data.length() - 1).split(", ");
         List<Integer> result = new ArrayList<>();
@@ -118,6 +132,22 @@ public class BlockDecimal {
             result.add(Integer.parseInt(it));
         }
         return result;
+    }
+    public List<Integer> getBlockFront() throws IOException {
+        return (numBlocks == 0) ? new ArrayList<>() : getBlock(numBlocks - 1);
+    }
+    public List<Integer> getBlockLast() throws IOException, IllegalAccessException {
+        if (numBlocks == 0) {
+            throw new IllegalAccessException("ERROR::Cannot access last block if no blocks exist");
+        }
+
+        return getBlock(0);
+    }
+    private int blockFrontIndex() {
+        return (numBlocks == 0) ? 0 : numBlocks - 1;
+    }
+    private int blockBackIndex() {
+        return 0;
     }
     private void writeBlock(List<Integer> data, int index) throws IOException {
         File file = new File(blockPath(index));
@@ -131,17 +161,20 @@ public class BlockDecimal {
 
         Files.writeString(file.toPath(), data.toString(), StandardOpenOption.CREATE);
     }
-    private void addDigits(List<Integer> digits) {
+    private void replaceFrontBlock(List<Integer> digits) {
         try {
-            List<Integer> lastDigits = null;
-            if (numBlocks == 0) {
-                lastDigits = new ArrayList<>();
-            } else {
-                lastDigits = getBlock(numBlocks - 1);
-            }
+            writeBlock(digits, blockFrontIndex());
+        } catch (IOException e) {
+            System.out.println("ERROR::failed to replaace front block\n" + e);
+            return;
+        }
+    }
+    private void appendDigits(List<Integer> digits) {
+        try {
+            List<Integer> lastDigits = getBlockFront();
             for (int i = digits.size() - 1; i >= 0; --i) {
                 if (lastDigits.size() + 1 == MAX_BLOCK_SIZE) {
-                    writeBlock(lastDigits, (numBlocks == 0) ? 0 : numBlocks - 1);
+                    replaceFrontBlock(lastDigits);
                     lastDigits = new ArrayList<>();
                     ++numBlocks;
                 }
@@ -159,10 +192,10 @@ public class BlockDecimal {
             return;
         }
     }
-    private void addDigit(int digit) {
+    private void appendDigit(int digit) {
         List<Integer> list = new ArrayList<>();
         list.add(digit);
-        addDigits(list);
+        appendDigits(list);
     }
     private String blockPath(int index) {
         return folder.getAbsolutePath() + "\\" + index + ".txt";

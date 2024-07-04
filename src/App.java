@@ -5,8 +5,8 @@ public class App {
     public static void main(String[] args) throws Exception {
         //System.out.println(new File("testdata").getAbsolutePath());
 
-        String numSrc1 = "1";
-        String numSrc2 = "2";
+        String numSrc1 = "5";
+        String numSrc2 = "5";
 
         BlockDecimal num1 = new BlockDecimal(numSrc1);
         BlockDecimal num2 = new BlockDecimal(numSrc2);
