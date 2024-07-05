@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BlockDecimal {
-    public static final int MAX_BLOCK_SIZE = 100;
+    public static final int MAX_BLOCK_SIZE = 10;
     public static final String MATH_ENV_FILE_PATH = "testdata/";
 
     private File folder = null;
@@ -45,16 +45,32 @@ public class BlockDecimal {
             }
 
             while (i >= 0) {
-                List<Integer> temp = getBlock(i);
-                int total = temp.getFirst() + carry;
-                int digit = total % 10;
-                carry = total / 10;
+                List<Integer> tempBlock = getBlock(i);
+                for (int k = tempBlock.size() - 1; k >= 0; --k) {
+                    int total = tempBlock.get(k) + carry;
+                    int digit = total % 10;
+                    carry = total / 10;
+
+                    result.appendDigit(digit);
+                }
                 
                 --i;
             }
             while (j >= 0) {
+                List<Integer> tempBlock = getBlock(j);
+                for (int k = tempBlock.size() - 1; k >= 0; --k) {
+                    int total = tempBlock.get(k) + carry;
+                    int digit = total % 10;
+                    carry = total / 10;
+
+                    result.appendDigit(digit);
+                }
 
                 --j;
+            }
+
+            if (carry != 0) {
+                result.appendDigit(carry);
             }
 
             return result;
@@ -71,9 +87,9 @@ public class BlockDecimal {
         for (int i = numBlocks - 1; i >= 0; --i) {
             try {
                 List<Integer> currBlock = getBlock(i);
-                String sb = "";
+                StringBuilder sb = new StringBuilder();
                 for (Integer it : currBlock) {
-                    sb = it + sb;
+                    sb.append(it);
                 }
                 System.out.print(sb.toString());
             } catch (IOException e) {
