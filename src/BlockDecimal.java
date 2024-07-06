@@ -6,9 +6,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.io.FileUtils;
 
 public class BlockDecimal {
-    public static final int MAX_BLOCK_SIZE = 10;
+    public static final int MAX_BLOCK_SIZE = 2;
     public static final String MATH_ENV_FILE_PATH = "testdata/";
 
     private File folder = null;
@@ -27,10 +28,10 @@ public class BlockDecimal {
     public BlockDecimal add(BlockDecimal oper) {
         try {
             BlockDecimal result = new BlockDecimal("");
-            int i = numBlocks - 1;
-            int j = oper.getNumBlocks() - 1;
+            int i = 0;
+            int j = 0;
             int carry = 0;
-            while (i >= 0 && j >= 0) {
+            while (i < numBlocks && j < oper.getNumBlocks()) {
                 List<Integer> block1 = getBlock(i);
                 List<Integer> block2 = oper.getBlock(i);
 
@@ -40,11 +41,11 @@ public class BlockDecimal {
 
                 result.appendDigits(newDigits);
 
-                --i;
-                --j;
+                ++i;
+                ++j;
             }
 
-            while (i >= 0) {
+            while (i < numBlocks) {
                 List<Integer> tempBlock = getBlock(i);
                 for (int k = tempBlock.size() - 1; k >= 0; --k) {
                     int total = tempBlock.get(k) + carry;
@@ -54,10 +55,10 @@ public class BlockDecimal {
                     result.appendDigit(digit);
                 }
                 
-                --i;
+                ++i;
             }
-            while (j >= 0) {
-                List<Integer> tempBlock = getBlock(j);
+            while (j < oper.getNumBlocks()) {
+                List<Integer> tempBlock = oper.getBlock(j);
                 for (int k = tempBlock.size() - 1; k >= 0; --k) {
                     int total = tempBlock.get(k) + carry;
                     int digit = total % 10;
@@ -66,7 +67,7 @@ public class BlockDecimal {
                     result.appendDigit(digit);
                 }
 
-                --j;
+                ++j;
             }
 
             if (carry != 0) {
@@ -98,6 +99,21 @@ public class BlockDecimal {
             }
         }
         System.out.println("");
+    }
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = numBlocks - 1; i >= 0; --i) {
+            try {
+                List<Integer> currBlock = getBlock(i);
+                for (Integer it : currBlock) {
+                    sb.append(it);
+                }
+            } catch (IOException e) {
+                System.out.println("ERROR::failed to print to console:\n" + e.toString());
+                return null;
+            }
+        }
+        return sb.toString();
     }
 
     private Object[] addBlock(List<Integer> oper1, List<Integer> oper2, int prevCarry) {
@@ -131,14 +147,8 @@ public class BlockDecimal {
             --j;
         }
 
-        if (carry == 0 && resultDigits.size() == MAX_BLOCK_SIZE) {
-            resultDigits.addFirst(carry);
-            Object[] result = { resultDigits, 0 };
-            return result;
-        } else {
-            Object[] result = { resultDigits, carry };
-            return result;
-        }
+        Object[] result = { resultDigits, carry };
+        return result;
     }
     public List<Integer> getBlock(int index) throws IOException {
         String data = Files.readString(Paths.get(blockPath(index)));
@@ -158,6 +168,13 @@ public class BlockDecimal {
         }
 
         return getBlock(0);
+    }
+    public void cleanUp() {
+        try {
+            FileUtils.deleteDirectory(folder);
+        } catch (IOException e) {
+            System.out.println("ERROR::failed to clean up decimal\n" + e.toString());
+        }
     }
     private int blockFrontIndex() {
         return (numBlocks == 0) ? 0 : numBlocks - 1;
@@ -189,13 +206,13 @@ public class BlockDecimal {
         try {
             List<Integer> lastDigits = getBlockFront();
             for (int i = digits.size() - 1; i >= 0; --i) {
-                if (lastDigits.size() + 1 == MAX_BLOCK_SIZE) {
+                if (lastDigits.size() == MAX_BLOCK_SIZE) {
                     replaceFrontBlock(lastDigits);
                     lastDigits = new ArrayList<>();
                     ++numBlocks;
                 }
                 lastDigits.addFirst(digits.get(i));
-                digits.removeFirst();
+                digits.removeLast();
             }
             if (numBlocks == 0) {
                 writeBlock(lastDigits, 0);
