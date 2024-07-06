@@ -6,7 +6,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.io.FileUtils;
 
 public class BlockDecimal {
     public static final int MAX_BLOCK_SIZE = 2;
@@ -14,10 +13,14 @@ public class BlockDecimal {
 
     private File folder = null;
     private int numBlocks = 0;
+    private boolean isNegative = false;
 
     public BlockDecimal(String src) {
         this.folder = new File(MATH_ENV_FILE_PATH + MathEnvironment.getId());
 
+        if (src.charAt(0) == '-') {
+            isNegative = true;
+        }
         for (int i = src.length() - 1; i >= 0; --i) {
             appendDigit(src.charAt(i) - 48);
         } 
@@ -80,40 +83,17 @@ public class BlockDecimal {
             return null;
         }
     }
-    public void print() {
-        System.out.println("folder path: " + folder.getAbsolutePath());
-        System.out.println("num blocks: " + numBlocks);
-        System.out.print("Digits: ");
+    public BlockDecimal subtract(BlockDecimal oper) {
+        int i = 0;
+        int j = 0; 
+        while (i < numBlocks && j < oper.getNumBlocks()) {
 
-        for (int i = numBlocks - 1; i >= 0; --i) {
-            try {
-                List<Integer> currBlock = getBlock(i);
-                StringBuilder sb = new StringBuilder();
-                for (Integer it : currBlock) {
-                    sb.append(it);
-                }
-                System.out.print(sb.toString());
-            } catch (IOException e) {
-                System.out.println("ERROR::failed to print to console:\n" + e.toString());
-                return;
-            }
+
+            ++i;
+            ++j;
         }
-        System.out.println("");
-    }
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = numBlocks - 1; i >= 0; --i) {
-            try {
-                List<Integer> currBlock = getBlock(i);
-                for (Integer it : currBlock) {
-                    sb.append(it);
-                }
-            } catch (IOException e) {
-                System.out.println("ERROR::failed to print to console:\n" + e.toString());
-                return null;
-            }
-        }
-        return sb.toString();
+
+        return null;
     }
 
     private Object[] addBlock(List<Integer> oper1, List<Integer> oper2, int prevCarry) {
@@ -150,6 +130,20 @@ public class BlockDecimal {
         Object[] result = { resultDigits, carry };
         return result;
     }
+    private Object[] subtractBlock(List<Integer> oper1, List<Integer> oper2, int prevBorrow) {
+        int i = oper1.size();
+        int j = oper2.size();
+        int borrow = prevBorrow;
+        while (i >= 0 && j >= 0) {
+            int total = oper1.get(i) - oper2.get(j) - borrow;
+            if (total < 0) {
+                
+            }
+        }
+        
+        return null;
+    }
+    
     public List<Integer> getBlock(int index) throws IOException {
         String data = Files.readString(Paths.get(blockPath(index)));
         String[] dataParsed = data.substring(1, data.length() - 1).split(", ");
@@ -170,10 +164,17 @@ public class BlockDecimal {
         return getBlock(0);
     }
     public void cleanUp() {
-        try {
-            FileUtils.deleteDirectory(folder);
-        } catch (IOException e) {
-            System.out.println("ERROR::failed to clean up decimal\n" + e.toString());
+        deleteDir(folder);
+    }
+    private void deleteDir(File file) {
+        File[] contents = file.listFiles();
+        if (contents != null) {
+            for (File it : contents) {
+                deleteDir(it);
+            }
+        }
+        if (file.delete() == false) {
+            System.out.println("ERROR::failed to delete file\n" + file.toString());
         }
     }
     private int blockFrontIndex() {
@@ -232,5 +233,41 @@ public class BlockDecimal {
     }
     private String blockPath(int index) {
         return folder.getAbsolutePath() + "\\" + index + ".txt";
+    }
+
+    public void print() {
+        System.out.println("folder path: " + folder.getAbsolutePath());
+        System.out.println("num blocks: " + numBlocks);
+        System.out.print("Digits: ");
+
+        for (int i = numBlocks - 1; i >= 0; --i) {
+            try {
+                List<Integer> currBlock = getBlock(i);
+                StringBuilder sb = new StringBuilder();
+                for (Integer it : currBlock) {
+                    sb.append(it);
+                }
+                System.out.print(sb.toString());
+            } catch (IOException e) {
+                System.out.println("ERROR::failed to print to console:\n" + e.toString());
+                return;
+            }
+        }
+        System.out.println("");
+    }
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = numBlocks - 1; i >= 0; --i) {
+            try {
+                List<Integer> currBlock = getBlock(i);
+                for (Integer it : currBlock) {
+                    sb.append(it);
+                }
+            } catch (IOException e) {
+                System.out.println("ERROR::failed to print to console:\n" + e.toString());
+                return null;
+            }
+        }
+        return sb.toString();
     }
 }
