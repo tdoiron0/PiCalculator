@@ -97,38 +97,16 @@ public class BlockDecimal {
     }
 
     private Object[] addBlock(List<Integer> oper1, List<Integer> oper2, int prevCarry) {
-        ArrayList<Integer> resultDigits = new ArrayList<>();
+        int i = 0; 
+        int j = 0;
+        while (i < oper1.size() && j < oper2.size()) {
+            
 
-        int i = oper1.size() - 1;
-        int j = oper2.size() - 1;
-        int carry = prevCarry;
-        while (i >= 0 && j >= 0) {
-            int total = oper1.get(i) + oper2.get(j) + carry;
-            int digit = total % 10;
-            carry = total / 10;
-            resultDigits.addFirst(digit);
-
-            --i;
-            --j;
+            ++i;
+            ++j;
         }
 
-        while (i >= 0) {
-            int total = oper1.get(i) + carry;
-            int digit = total % 10; 
-            carry = total / 10;
-            resultDigits.addFirst(digit);
-            --i;
-        }
-        while (j >= 0) {
-            int total = oper2.get(j) + carry;
-            int digit = total % 10; 
-            carry = total / 10;
-            resultDigits.addFirst(digit);
-            --j;
-        }
-
-        Object[] result = { resultDigits, carry };
-        return result;
+        return null;
     }
     private Object[] subtractBlock(List<Integer> oper1, List<Integer> oper2, int prevBorrow) {
         int i = oper1.size();
