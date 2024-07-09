@@ -100,7 +100,11 @@ public class BlockDecimal {
         int i = 0; 
         int j = 0;
         while (i < oper1.size() && j < oper2.size()) {
-            
+            int mask = 0b10000000000000000000000000000000;
+            for (int k = 0; k < 32; ++k) {
+                
+                mask = mask >> 1;
+            }
 
             ++i;
             ++j;
@@ -109,8 +113,8 @@ public class BlockDecimal {
         return null;
     }
     private Object[] subtractBlock(List<Integer> oper1, List<Integer> oper2, int prevBorrow) {
-        int i = oper1.size();
-        int j = oper2.size();
+        int i = oper1.size() - 1;
+        int j = oper2.size() - 1;
         int borrow = prevBorrow;
         while (i >= 0 && j >= 0) {
             int total = oper1.get(i) - oper2.get(j) - borrow;
