@@ -8,36 +8,13 @@ import Util.DebugTimer;
 public class App {
     public static final int NUM1_MAX_VALUE = 1000;
     public static final int NUM2_MAX_VALUE = 1000;
-
-    public static final long LONG_MASK = 0xffffffffL;
     public static void main(String[] args) throws Exception {
-        //System.out.println(new File("testdata").getAbsolutePath());
-        
-        //specificTest();
-        //fullTest();
-
-        /*
-        int big = 10;
-        int little = 8;
-        long difference = 0;
-
-        difference = (big & LONG_MASK) - (little & LONG_MASK) + (difference >> 32);
-        
-        System.out.println((int)difference);
-        */
-
-        System.out.println("Integer.MAX_VALUE: " + Integer.MAX_VALUE);
-        System.out.println("Long.MAX_VALUE: " + Long.MAX_VALUE);
-
-        byte[] src1 = { 0b00000001, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000 };
-        byte[] src2 = { (byte)-1, (byte)-1, (byte)-1, (byte)-1, (byte)-1, (byte)-1, (byte)-1, (byte)-1 };
-
-        BigInteger x = new BigInteger(1, src1); 
-        BigInteger y = new BigInteger(1, src2);
-
-        BigInteger z = x.subtract(y);
-
-        System.out.println(z);
+        File file = new File("testdata");
+        File[] files = file.listFiles();
+        for (File it : files) {
+            System.out.println(it.getAbsolutePath());
+            System.out.println(it.isFile());
+        }
     }
 
     public static void specificTest() {
@@ -99,5 +76,20 @@ public class App {
             }
         }
         System.out.println("Test end");
+    }
+
+    public static void testingBigNumbers() {
+        System.out.println("Integer.MAX_VALUE: " + Integer.MAX_VALUE);
+        System.out.println("Long.MAX_VALUE: " + Long.MAX_VALUE);
+
+        byte[] src1 = { 0b00000001, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000 };
+        byte[] src2 = { (byte)-1, (byte)-1, (byte)-1, (byte)-1, (byte)-1, (byte)-1, (byte)-1, (byte)-1 };
+
+        BigInteger x = new BigInteger(1, src1); 
+        BigInteger y = new BigInteger(1, src2);
+
+        BigInteger z = x.subtract(y);
+
+        System.out.println(z);
     }
 }
