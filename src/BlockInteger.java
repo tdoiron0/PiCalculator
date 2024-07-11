@@ -63,11 +63,12 @@ public class BlockInteger {
             BlockInteger x = (numDigits > val.numDigits) ? this : val;
             BlockInteger y = (numDigits > val.numDigits) ? val : this;
             
+            int resultBlockCount = 0;
             int i = x.numBlocks - 1;
             int j = y.numBlocks - 1;
             long prevSum = 0L;
             while (j >= 0) {
-                File newBlockFile = new File(resultFolder.getAbsolutePath() + "\\" + i + ".txt");
+                File newBlockFile = new File(resultFolder.getAbsolutePath() + "\\" + resultBlockCount++ + ".txt");
 
                 Object[] temp = x.add(x.getBlock(i), y.getBlock(j), prevSum);
                 List<Integer> resBlock = (List<Integer>)temp[0];
@@ -81,7 +82,7 @@ public class BlockInteger {
 
             boolean carry = (prevSum >>> 32 != 0);
             while (i >= 0 && carry) {
-                File newBlockFile = new File(resultFolder.getAbsolutePath() + "\\" + i + ".txt");
+                File newBlockFile = new File(resultFolder.getAbsolutePath() + "\\" + resultBlockCount++ + ".txt");
 
                 Object[] temp = x.add(x.getBlock(i), prevSum);
                 List<Integer> resBlock =  (List<Integer>)temp[0];
@@ -93,16 +94,16 @@ public class BlockInteger {
             }
 
             while (i >= 0) {
-                File newBlockFile = new File(resultFolder.getAbsolutePath() + "\\" + i + ".txt");
+                File newBlockFile = new File(resultFolder.getAbsolutePath() + "\\" + resultBlockCount++ + ".txt");
                 writeBlock(newBlockFile, x.getBlock(i));
                 --i;
             }
 
             if (carry) {
-                File newBlockFile = new File(resultFolder.getAbsolutePath() + "\\" + i + ".txt");
+                File newBlockFile = new File(resultFolder.getAbsolutePath() + "\\" + resultBlockCount++ + ".txt");
                 List<Integer> newBlock = new ArrayList<>();
                 newBlock.add(1);
-                writeBlock(resultFolder, newBlock);
+                writeBlock(newBlockFile, newBlock);
             }
 
             return new BlockInteger(signum, resultFolder);
@@ -128,9 +129,33 @@ public class BlockInteger {
             y = temp;
         }
 
-        int i = x.size();
-        int j = y.size();
+        List<Integer> result = new ArrayList<>();
+        int i = x.size() - 1;
+        int j = y.size() - 1;
         long sum = prevSum;
+        while (j >= 0) {
+            sum = (x.get(i) & LONG_MASK) + (y.get(j) & LONG_MASK) + (sum >>> 32);
+            result.addFirst((int)sum);
+
+            --i;
+            --j;
+        }
+
+        boolean carry = (sum >>> 32 != 0);
+        while (i >= 0 && carry) {
+            int temp = x.get(i) + 1;
+            result.addFirst(temp);
+            carry = temp == 0;
+            --i;
+        }
+
+        while (i >= 0) {
+            result.addFirst(x.get(i--));
+        }
+
+        if (carry) {
+            result.addFirst(1);
+        }
 
         return null;
     }
@@ -140,9 +165,9 @@ public class BlockInteger {
     }
 
     private int compareMagnitude(BlockInteger val) {
-        if (numDigits > val.getNumDigits()) 
+        if (numDigits > val.numDigits) 
             return 1;
-        if (numDigits < val.getNumDigits()) 
+        if (numDigits < val.numDigits) 
             return -1;
         
         for (int i = numDigits - 1; i >= 0; --i) {
