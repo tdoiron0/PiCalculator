@@ -142,22 +142,26 @@ public class BlockInteger {
         }
 
         boolean carry = (sum >>> 32 != 0);
-        while (i >= 0 && carry) {
+        while (i >= 0 && i < MAX_BLOCK_SIZE && carry) {
             int temp = x.get(i) + 1;
             result.addFirst(temp);
             carry = temp == 0;
             --i;
         }
 
-        while (i >= 0) {
+        while (i >= 0 && i < MAX_BLOCK_SIZE) {
             result.addFirst(x.get(i--));
         }
 
-        if (carry) {
+        if (carry && i < MAX_BLOCK_SIZE) {
             result.addFirst(1);
         }
 
-        return null;
+        Object[] r = new Object[2];
+        r[0] = result;
+        r[1] = (carry) ? 1 : 0;
+
+        return r;
     }
 
     private Object[] add(List<Integer> x, long prevSum) {
