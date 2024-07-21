@@ -22,6 +22,29 @@ public class BlockInteger {
 
     public BlockInteger(String src) {
         this.folder = new File(MathEnvironment.MATH_ENV_FILE_PATH + MathEnvironment.getId());
+
+        if (src.charAt(0) == '0') {
+            this.signum = 0;
+        } else if (src.charAt(0) == '-') {
+            this.signum = -1;
+        } else {
+            this.signum = 1;
+        } 
+
+        List<Integer> currBlock = new ArrayList<>();
+        for (int i = ((this.signum == -1) ? 1 : 0); i < src.length(); ++i) {
+            if (currBlock.size() > MAX_BLOCK_SIZE) {
+                writeBlock(new File(this.folder.getAbsolutePath() + "\\" + numBlocks + ".txt"), currBlock);
+                ++numBlocks;
+                currBlock = new ArrayList<>();
+            }
+            currBlock.add(src.charAt(i) - 48);
+        }
+
+        if (currBlock.size() > 0) {
+            writeBlock(new File(this.folder.getAbsolutePath() + "\\" + numBlocks + ".txt"), currBlock);
+            ++numBlocks;
+        }
     }
 
     public BlockInteger(int signum, File folder) {
@@ -129,13 +152,13 @@ public class BlockInteger {
             y = temp;
         }
 
-        List<Integer> result = new ArrayList<>();
+        List<Integer> resultDigits = new ArrayList<>();
         int i = x.size() - 1;
         int j = y.size() - 1;
         long sum = prevSum;
         while (j >= 0) {
             sum = (x.get(i) & LONG_MASK) + (y.get(j) & LONG_MASK) + (sum >>> 32);
-            result.addFirst((int)sum);
+            resultDigits.addFirst((int)sum);
 
             --i;
             --j;
@@ -144,28 +167,50 @@ public class BlockInteger {
         boolean carry = (sum >>> 32 != 0);
         while (i >= 0 && i < MAX_BLOCK_SIZE && carry) {
             int temp = x.get(i) + 1;
-            result.addFirst(temp);
+            resultDigits.addFirst(temp);
             carry = temp == 0;
             --i;
         }
 
         while (i >= 0 && i < MAX_BLOCK_SIZE) {
-            result.addFirst(x.get(i--));
+            resultDigits.addFirst(x.get(i--));
         }
 
         if (carry && i < MAX_BLOCK_SIZE) {
-            result.addFirst(1);
+            resultDigits.addFirst(1);
         }
 
-        Object[] r = new Object[2];
-        r[0] = result;
-        r[1] = (carry) ? 1 : 0;
+        Object[] result = new Object[2];
+        result[0] = resultDigits;
+        result[1] = (carry) ? (long)1 : (long)0;
 
-        return r;
+        return result;
     }
 
     private Object[] add(List<Integer> x, long prevSum) {
-        return null;
+        List<Integer> resultDigits = new ArrayList<>();
+        int i = x.size() - 1;
+        boolean carry = prevSum > 0;
+        while (i >= 0 && i < MAX_BLOCK_SIZE && carry) {
+            int temp = x.get(i) + 1;
+            resultDigits.addFirst(temp);
+            carry = temp == 0;
+            --i;
+        }
+
+        while (i >= 0 && i < MAX_BLOCK_SIZE) {
+            resultDigits.addFirst(x.get(i--));
+        }
+
+        if (carry && i < MAX_BLOCK_SIZE) {
+            resultDigits.addFirst(1);
+        }
+
+        Object[] result = new Object[2];
+        result[0] = resultDigits;
+        result[1] = (carry) ? 1 : 0;
+
+        return result;
     }
 
     private int compareMagnitude(BlockInteger val) {

@@ -9,12 +9,15 @@ public class App {
     public static final int NUM1_MAX_VALUE = 1000;
     public static final int NUM2_MAX_VALUE = 1000;
     public static void main(String[] args) throws Exception {
-        File file = new File("testdata");
-        File[] files = file.listFiles();
-        for (File it : files) {
-            System.out.println(it.getAbsolutePath());
-            System.out.println(it.isFile());
-        }
+        String src1 = "1";
+        String src2 = "2";
+
+        BlockInteger testVal1 = new BlockInteger(src1);
+        BlockInteger testVal2 = new BlockInteger(src2); 
+
+        BlockInteger testResult = testVal1.add(testVal2);
+
+        System.out.println(testResult);
     }
 
     public static void specificTest() {
